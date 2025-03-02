@@ -1,0 +1,2 @@
+# DeepSeek-MoonOrange
+基于python实现的DeepSeek特殊化的调用界面，远离服务器繁忙的烦恼，记忆增强模式让deepseek不再忘记自己的思考过程，金鱼模式可以节省deepseek-api用量
