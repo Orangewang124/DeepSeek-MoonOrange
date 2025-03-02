@@ -54,6 +54,8 @@ DeepSeek MoonOrange 是一个用于使用DeepSeek的api访问deepseek的界面�
 
 删除或更改历史对话记录文件可能会失去历史对话记录，建议先进行备份后再操作，请谨慎操作！！！
 
+windows的exe下载链接https://github.com/Orangewang124/DeepSeek-MoonOrange/releases/tag/DeepSeek-MoonOrange
+
 **版权声明**
 
 该程序由MoonOrange及DeepSeek编写，只能用于非盈利目的。
