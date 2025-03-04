@@ -18,7 +18,26 @@ DeepSeek MoonOrange 是一个用于使用DeepSeek的api访问deepseek的界面�
 
 *功能 4：记忆增强模式* 选择增强记忆模式时deepseek会回忆起他之前的思考过程
 
-*功能 5：上传文件*
+*功能 5：联网搜索*
+
+点击联网搜索按钮即可使用联网搜索功能，选择左侧联网引擎即可更换联网引擎
+
+默认Bing-Normal使用爬虫爬取Bing的搜索结果
+
+注意：Bing-Normal搜索质量较差，很可能搜索不到结果，建议使用其他搜索引擎
+
+其中Duck-General和Duck-News模式均使用DuckDuckGo引擎进行搜索，General是普通文本搜索,News是进行新闻类搜索，详情参考https://github.com/deedy5/duckduckgo_search
+
+注意：DuckDuckGo引擎暂不支持中国网络环境，可能需要使用VPN
+
+其中Tavily-General Tavily-News Tavily-Finance均使用tavily,引擎进行搜索，General是普通文本搜索,News是进行新闻类搜索，Finance是财经类搜索，详情参考https://app.tavily.com/playground
+
+注意：Tavily引擎需要tavily的api，tavily官网https://tavily.com/ 可能需要使用VPN才能进入，注册账号的六位code需要Authenticator(ios系统)或 Ezi身份验证器(HarmonyOS Next系统)进行扫码获取
+
+注意：目前Tavily支持一个账号一个月的1000次搜索api调用免费计划，详情参考tavily官网
+
+
+*功能 6：上传文件*
 
 点击上传文件后选择文件即可开始本地读取文件，这一行为完全在本地完成，且目前只支持读取文本类内容
 
@@ -33,7 +52,7 @@ DeepSeek MoonOrange 是一个用于使用DeepSeek的api访问deepseek的界面�
 注意：点击发送会将读取到的文件内容以对话的形式发给deepseek，请注意保护隐私信息
 
 
-*功能 6：调节温度*
+*功能 7：调节温度*
 
 Temperature 参数默认为 1.0
 
@@ -47,10 +66,6 @@ DeepSeek官方建议如下，详情参考https://api-docs.deepseek.com/zh-cn/qui
 
 创意类写作/诗歌创作	1.5
 
-*功能 7：联网搜索*
-
-默认使用DuckDuckGo进行搜索，该搜索功能暂时在中国境内被墙，若不可用则会自动抓取Bing搜索内容，Bing搜索质量较差
-
 **使用说明**
 
 第一次打开时会自动创建chat_config.json文件，文件目录为DeepSeek MoonOrange.exe的同一级目录，格式如下
@@ -58,7 +73,8 @@ DeepSeek官方建议如下，详情参考https://api-docs.deepseek.com/zh-cn/qui
 [
     {
         "api-key": "your-api-key",
-        "theme_style": "litera"
+        "theme_style": "litera",
+        "tavily-api-key": "tavily-api-key"
     }
 ]
 
@@ -67,6 +83,8 @@ DeepSeek官方建议如下，详情参考https://api-docs.deepseek.com/zh-cn/qui
 如果需要更新api-key直接编辑chat_config.json即可
 
 申请deepseek的api-key请查看https://api-docs.deepseek.com/
+
+申请tavily的api-key请查看tavily官网https://tavily.com/
 
 在输入框输入文字后点击发送或回车后即可调用deepseek的api与deepseek对话
 
@@ -85,8 +103,6 @@ DeepSeek官方建议如下，详情参考https://api-docs.deepseek.com/zh-cn/qui
 选择金鱼模式时deepseek将不记得之前的对话
 
 **其他说明**
-
-联网模式暂不可用
 
 历史记录文件为chat_history.json，文件目录为DeepSeek MoonOrange.exe的同一级目录，第一次使用会自动创建
 
