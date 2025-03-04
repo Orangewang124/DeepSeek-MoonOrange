@@ -47,6 +47,10 @@ DeepSeek官方建议如下，详情参考https://api-docs.deepseek.com/zh-cn/qui
 
 创意类写作/诗歌创作	1.5
 
+*功能 7：联网搜索*
+
+默认使用DuckDuckGo进行搜索，该搜索功能暂时在中国境内被墙，若不可用则会自动抓取Bing搜索内容，Bing搜索质量较差
+
 **使用说明**
 
 第一次打开时会自动创建chat_config.json文件，文件目录为DeepSeek MoonOrange.exe的同一级目录，格式如下
