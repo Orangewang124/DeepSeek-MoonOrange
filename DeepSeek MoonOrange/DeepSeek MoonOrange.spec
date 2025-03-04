@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['DeepSeek2.py'],
+    ['DeepSeek.py'],
     pathex=[],
     binaries=[],
-    datas=[('deepseek.png', '.'), ('user_penguin.png', '.'), ('deepseek.ico', '.')],
+    datas=[('deepseek.png', '.'), ('user_penguin.png', '.'), ('deepseek.ico', '.'),('deepseekFile.png', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

@@ -10,7 +10,10 @@ import requests
 import os
 import datetime
 import sys
-import math
+from bs4 import BeautifulSoup
+from duckduckgo_search import DDGS
+from tavily import TavilyClient
+import random
 
 class DeepSeekChat:
     def __init__(self, root):
@@ -28,6 +31,7 @@ class DeepSeekChat:
         self.log_file = "chat_history.json"
         self.load_history()
         self.api_key = "your-api-key"
+        self.tavily_api_key = "tavily-api-key"
         self.config = {}
         self.theme_style = "litera"
         self.config_file = "chat_config.json"
@@ -40,6 +44,7 @@ class DeepSeekChat:
         self.upload_file_content = []
         self.upload_file_name = []
         self.upload_file_icons = []
+        self.search_mode = tk.StringVar(value="Bing-General")
 
         # 预加载文件类型图标（需要准备对应的png文件）
         self.icon_images = {
@@ -51,6 +56,7 @@ class DeepSeekChat:
 
         # 创建界面
         self.style = Style(theme=self.theme_style)
+        self.ini_style()
         self.create_widgets()
         self.setup_bindings()
         self.input_text.focus_set()
@@ -58,6 +64,34 @@ class DeepSeekChat:
         self.load_history()
         #messagebox.showinfo("DeepSeek For MoonOrange", "本项目完全开源于https://github.com/Orangewang124/DeepSeek-MoonOrange不能用于任何盈利目的\n如果觉得有意思就帮我Star一下呗:)")
         self.display_left_message("本项目完全开源于https://github.com/Orangewang124/DeepSeek-MoonOrange不能用于任何盈利目的\n如果觉得有意思就帮我Star一下呗:)", 10)
+
+    def ini_style(self):
+        # 自定义Combobox样式
+        self.style.configure('custom.TCombobox',
+                             font=('Times New Roman', 10),
+                             selectbackground='white',
+                             selectforeground='black',
+                             fieldbackground='white',
+                             background='white',
+                             relief='flat')
+
+        # 状态映射配置
+        self.style.map('custom.TCombobox',
+                       fieldbackground=[
+                           ('hover', '#f0f0f0'),  # 鼠标悬停时输入框背景
+                           ('active', 'white'),  # 激活状态保持白色
+                           ('!disabled', 'white')  # 正常状态背景
+                       ],
+                       foreground=[
+                           ('hover', 'black'),  # 鼠标悬停时文字颜色
+                           ('active', 'black'),  # 激活状态颜色
+                           ('!disabled', 'black')  # 正常状态颜色
+                       ],
+                       background=[
+                           ('hover', '#f0f0f0'),  # 鼠标悬停时下拉按钮背景
+                           ('active', 'white'),
+                           ('!disabled', 'white')
+                       ])
 
     def resource_path(self, relative_path):
         """ 获取资源的绝对路径 """
@@ -74,10 +108,9 @@ class DeepSeekChat:
         # 使用父窗口作为对话框的父组件
         api_key = simpledialog.askstring(
             "DeepSeek-API",
-            "请输入您的API密钥:)",
+            "请输入您的DeepSeek-API密钥:)",
             parent=self.root,  # 根据实际父窗口调整这个参数
         )
-        print(api_key)
         # 处理取消输入的情况
         if api_key is None:
             return None
@@ -95,17 +128,30 @@ class DeepSeekChat:
             if os.path.exists(self.config_file):
                 with open(self.config_file, "r", encoding="utf-8") as f:
                     self.config = json.load(f)
-                    self.api_key = self.config[0]["api-key"]
-                    self.theme_style = self.config[0]["theme_style"]
+                    if "api-key" in self.config[0]:
+                        self.api_key = self.config[0]["api-key"]
+                    else:
+                        self.api_key = self.get_api_key()
+                    if "theme_style" in self.config[0]:
+                        self.theme_style = self.config[0]["theme_style"]
+                    else:
+                        self.theme_style = "litera"
+                        self.config[0]["theme_style"] = "litera"
+                    if "tavily-api-key" in self.config[0]:
+                        self.tavily_api_key = self.config[0]["tavily-api-key"]
+                    else:
+                        self.tavily_api_key = "tavily-api-key"
+                        self.config[0]["tavily-api-key"] = "tavily-api-key"
                 if self.api_key == "your-api-key":
                     self.api_key = self.get_api_key()
                     self.config[0]["api-key"] = self.api_key
-                    with open(self.config_file, "w", encoding="utf-8") as f:
-                        json.dump(self.config, f, ensure_ascii=False)
+                with open(self.config_file, "w", encoding="utf-8") as f:
+                    json.dump(self.config, f, ensure_ascii=False)
             else:
                 self.config = [{
                     "api-key": "your-api-key",
-                    "theme_style": "litera"
+                    "theme_style": "litera",
+                    "tavily-api-key": "tavily-api-key"
                 }]
                 self.api_key = self.get_api_key()
                 self.config[0]["api-key"] = self.api_key
@@ -147,6 +193,42 @@ class DeepSeekChat:
         self.history_list.pack(fill=tk.BOTH, expand=True)
         self.update_history_list()
 
+        # 底部复选框面板（新增底部控制栏）
+        self.left_control_frame = ttk.Frame(self.history_frame)
+        self.left_control_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=0, pady=5)
+        # 添加"联网引擎"标签和复选框
+        ttk.Label(
+            self.left_control_frame,
+            text="联网引擎：",
+            font=('宋体', 10),
+            anchor='e'
+        ).pack(side=tk.LEFT, padx=(0, 0))
+        # 在界面布局部分
+        search_combobox = ttk.Combobox(
+            self.left_control_frame,
+            textvariable=self.search_mode,
+            values=[
+                "Tavily-General",
+                "Tavily-News",
+                "Tavily-Finance",
+                "Duck-General",
+                "Duck-News",
+                "Bing-General"
+            ],
+            state="readonly",
+            width=12,
+            style='custom.TCombobox',  # 应用自定义样式
+            bootstyle='info'
+        )
+
+        # 绑定事件实现下拉列表项效果
+        search_combobox.bind("<<ComboboxSelected>>", self._reset_combobox_style)
+        search_combobox.bind("<Enter>", lambda e: search_combobox.config(style='custom.TCombobox'))
+        search_combobox.bind("<Leave>", self._reset_combobox_style)
+
+        # 添加到界面
+        search_combobox.pack(side=tk.RIGHT, padx=0)
+
         # 主聊天区域
         self.main_frame = ttk.Frame(self.root)
         self.main_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
@@ -169,11 +251,11 @@ class DeepSeekChat:
 
         ttk.Checkbutton(self.control_frame, text="深度思考", variable=self.deep_think_var,
                         bootstyle='success-round-toggle').pack(side=tk.LEFT, padx=5)
-        ttk.Checkbutton(self.control_frame, text="联网搜索", variable=self.search_var,
-                        bootstyle='success-round-toggle').pack(side=tk.LEFT, padx=5)
         ttk.Checkbutton(self.control_frame, text="金鱼模式", variable=self.gold_fish_var,
                         bootstyle='success-round-toggle').pack(side=tk.LEFT, padx=5)
         ttk.Checkbutton(self.control_frame, text="记忆增强", variable=self.memory_enhance_var,
+                        bootstyle='success-round-toggle').pack(side=tk.LEFT, padx=5)
+        ttk.Checkbutton(self.control_frame, text="联网模式", variable=self.search_var,
                         bootstyle='success-round-toggle').pack(side=tk.LEFT, padx=5)
 
         # 温度标签
@@ -254,6 +336,14 @@ class DeepSeekChat:
         self.input_text.pack(fill=tk.BOTH, expand=False, padx=10, pady=10)
         self.send_button = ttk.Button(self.input_frame, text="发送", command=self.send_message)
         self.send_button.pack(side=tk.RIGHT)
+
+    # 定义样式重置方法
+    def _reset_combobox_style(self, event=None):
+        """重置Combobox样式并刷新下拉列表"""
+        self.style.configure('custom.TCombobox', fieldbackground='white')
+        self.style.map('custom.TCombobox',
+                       fieldbackground=[('!disabled', 'white')])
+        event.widget.update_idletasks()
 
     def create_cream_gradient(self, x1, y1, x2, y2):
         """创建奶油色渐变（蓝到红）"""
@@ -571,10 +661,16 @@ class DeepSeekChat:
             else:
                 try:
                     # 添加到当前对话
-                    self.current_chat.append({
-                        "role": "user",
-                        "content": self.current_message
-                    })
+                    if self.current_chat[-1]["role"] == "user":
+                        self.current_chat[-1] = {
+                            "role": "user",
+                            "content": self.current_message
+                        }
+                    else:
+                        self.current_chat.append({
+                            "role": "user",
+                            "content": self.current_message
+                        })
                     self.current_history["messages"] = self.current_chat
                     self.history.pop(0)
                     self.history.insert(0, self.current_history)
@@ -617,6 +713,11 @@ class DeepSeekChat:
             return
         # 展示用户消息
         self.display_user_message(self.current_message)  # 调整到思考状态之前
+        self.update_chat_log()
+        # 联网搜索
+        if self.search_var.get():
+            search_content = self.search_message()
+            self.current_message = search_content + self.current_message
         # 上传文件
         if len(self.upload_file_content) > 0:
             file_content = "请根据下列文档内容回答问题\n"
@@ -637,10 +738,50 @@ class DeepSeekChat:
         # 清空输入框
         self.input_text.delete("1.0", tk.END)
         # 创建API请求线程
-        thread = threading.Thread(target=self.call_deepseek_api, args=(self.current_message,))
+        thread = threading.Thread(target=self.call_deepseek_api)
         thread.start()
 
-    def call_deepseek_api(self, message):
+    def search_message(self):
+        search_content = ""
+        search_key_words = self.deepseek_before_search()
+        search_key_words.replace("\n", "")
+        search_answer = ""
+        if search_key_words == "":
+            search_key_words = self.current_message
+        if search_key_words != "":
+            search_list = []
+            search_mode = self.search_mode.get()
+            #联网搜索
+            if search_mode == "Tavily-General":
+                search_list, search_answer = self.search_tavily(search_key_words, "general")
+            elif search_mode == "Tavily-News":
+                search_list, search_answer = self.search_tavily(search_key_words, "news")
+            elif search_mode == "Tavily-Finance":
+                search_list, search_answer = self.search_tavily(search_key_words, "finance")
+            elif search_mode == "Duck-General":
+                search_list = self.search_duck_normal(search_key_words)
+            elif search_mode == "Duck-News":
+                search_list = self.search_duck_news(search_key_words)
+            elif search_mode == "Bing-General":
+                search_list = self.search_bing_normal(search_key_words, page=1)
+
+            # 网页有返回
+            if len(search_list) > 0:
+                search_content = "请根据下列网页的内容回答下面的问题，并在回答过程中引用相关网页，在结尾列出相关网页\n"
+                self.display_file_upload("已搜索到相关[" + search_key_words + "]网页:)")
+                for i in range(len(search_list)):
+                    search_content += "网页" + f"{i + 1}" + ":\n" + search_list[i]["title"] + search_list[i]["url"] + "\n" + "内容：" + search_list[i]["content"];
+            else:
+                self.display_file_upload("搜索关键词[" + search_key_words + "]失败")
+            if search_answer != "":
+                self.display_left_message("[搜索简答]:" + search_answer + "\n", 12)
+            else:
+                self.display_left_message("\n",12)
+        else:
+            self.display_file_upload("[关键词为空]")
+        return search_content
+
+    def call_deepseek_api(self):
         api_chat = []
         if self.gold_fish_var.get():
             api_chat.append({"role": self.current_chat[-1]["role"],
@@ -765,14 +906,17 @@ class DeepSeekChat:
                     self.history.pop(index)
                     self.history.insert(0, self.current_history)
                 self.current_chat = self.current_history["messages"]
-                while (self.current_chat[-1]["role"] == "user"):
-                    # 插入输入文本框文字
-                    self.input_text.insert(tk.END, self.current_chat[-1]["content"])
-                    self.current_message = ""
-                    self.current_chat.pop()
+
+                while (len(self.current_chat) > 0):
+                    if self.current_chat[-1]["role"] == "user":
+                        # 插入输入文本框文字
+                        self.input_text.insert(tk.END, self.current_chat[-1]["content"])
+                        self.current_message = ""
+                        self.current_chat.pop()
+                    else:
+                        break
                 else:
                     self.current_message = ""
-
                 with open(self.log_file, "w", encoding="utf-8") as f:
                     json.dump(self.history, f, ensure_ascii=False)
                 self.update_history_list()
@@ -1082,6 +1226,197 @@ class DeepSeekChat:
         new_lmargin = max(1200, int(win_width))
         self.chat_text.tag_configure("right_align", lmargin1=new_lmargin)
         self.chat_text.tag_configure("timestamp_right", lmargin1=new_lmargin)
+
+    def search_bing_normal(self, query: str, page: int = 1):
+        """
+        Bing 搜索爬虫
+        :param query: 搜索关键词
+        :param page: 页码（每页约10条结果）
+        :return: 包含标题、链接、描述的字典列表
+        """
+        # 自定义请求头（模拟浏览器）
+        HEADERS = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            #"Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://www.bing.com/",
+        }
+
+        # 代理池（可选）
+        PROXIES = {
+            # "http": "http://your_proxy_ip:port",
+            # "https": "http://your_proxy_ip:port"
+        }
+        base_url = "https://www.bing.com/search"
+        params = {
+            "q": query,
+            "first": (page - 1) * 10 + 1,  # Bing 分页参数
+      #      "setmkt": lang
+        }
+
+        try:
+            # 发送请求（添加随机延时防止封禁）
+            time.sleep(random.uniform(1, 3))
+            response = requests.get(
+                base_url,
+                params=params,
+                headers=HEADERS,
+                proxies=PROXIES,
+                timeout=10
+            )
+            response.raise_for_status()  # 检查HTTP状态码
+
+            # 解析HTML
+            soup = BeautifulSoup(response.text, "html.parser")
+            results = []
+
+            # 定位搜索结果条目（根据Bing最新HTML结构调整）
+            for item in soup.select("li.b_algo"):
+                title_elem = item.select_one("h2 a")
+                url = title_elem.get("href") if title_elem else None
+                title = title_elem.get_text(strip=True) if title_elem else "No Title"
+
+                # 描述可能在多个位置
+                description_elem = item.select_one(".b_caption p, .b_algoSlug")
+                description = description_elem.get_text(strip=True) if description_elem else "No Description"
+                description.replace("\n", "")
+                results.append({
+                    "title": title,
+                    "url": url,
+                    "content": description
+                })
+            return results
+        except Exception as e:
+            print(f"[ERROR] 搜索失败: {str(e)}")
+            return []
+
+    def get_tavily_api_key(self):
+        """弹出输入框获取API密钥"""
+        # 使用父窗口作为对话框的父组件
+        api_key = simpledialog.askstring(
+            "tavily-API",
+            "请输入您的tavily-API密钥:)",
+            parent=self.root,  # 根据实际父窗口调整这个参数
+        )
+        # 处理取消输入的情况
+        if api_key is None:
+            return None
+
+        # 处理空输入的情况
+        if not api_key.strip():
+            self.show_error("API密钥不能为空")
+            return None
+        return api_key
+
+    def renew_config(self):
+        try:
+            with open(self.config_file, "w", encoding="utf-8") as f:
+                json.dump(self.config, f, ensure_ascii=False)
+        except Exception as e:
+            self.show_error(str(e))
+
+    def search_tavily(self, search_query, topic_mode):
+        search_list = []
+        search_answer = ""
+        if self.tavily_api_key == "" or self.tavily_api_key == "tavily-api-key":
+            self.tavily_api_key = self.get_tavily_api_key()
+            self.config[0]["tavily-api-key"] = self.tavily_api_key
+            with open(self.config_file, "w", encoding="utf-8") as f:
+                json.dump(self.config, f, ensure_ascii=False)
+        try:
+            client = TavilyClient(self.tavily_api_key)
+            response = client.search(
+                query=search_query,
+                topic=topic_mode,
+                search_depth="advanced",
+                max_results=10,
+                include_answer="advanced"
+            )
+            search_list = response["results"]
+            search_answer = response["answer"]
+        except Exception as e:
+            self.show_error(str(e))
+            self.tavily_api_key = self.get_tavily_api_key()
+            self.config[0]["tavily-api-key"] = self.tavily_api_key
+            with open(self.config_file, "w", encoding="utf-8") as f:
+                json.dump(self.config, f, ensure_ascii=False)
+        return search_list, search_answer
+
+    def search_duck_normal(self, search_query):
+        search_list = []
+        try:
+            search_list = DDGS().text(search_query, max_results=10, safesearch='off')
+        except Exception as e:
+            messagebox.showinfo("DeepSeek For MoonOrange", f"无法连接到DuckDuckGo,可能需要开启VPN:)\n失败原因:{str(e)}")
+        #格式统一到"title","url","content"
+        if len(search_list) > 0:
+            for i in range(len(search_list)):
+                search_list[i]["url"] = search_list.pop("href")
+                search_list[i]["content"] = search_list.pop("body")
+        return search_list
+
+    def search_duck_news(self, search_query):
+        search_list = []
+        try:
+            search_list = DDGS().news(search_query, max_results=10, safesearch='off')
+        except Exception as e:
+            messagebox.showinfo("DeepSeek For MoonOrange", f"无法连接到DuckDuckGo,可能需要开启VPN:)\n失败原因:{str(e)}")
+        # 格式统一到"title","url","content"
+        if len(search_list) > 0:
+            for i in range(len(search_list)):
+                search_list[i]["url"] = search_list.pop("href")
+                search_list[i]["content"] = search_list.pop("body")
+        return search_list
+
+    def deepseek_before_search(self):
+        api_chat = []
+        if self.gold_fish_var.get():
+            api_chat.append({"role": self.current_chat[-1]["role"],
+                             "content": self.current_chat[-1]["content"]
+                             })
+        else:
+            memory_enhance_flag = self.memory_enhance_var.get()
+            for temp_chat in self.current_chat:
+                if "reasoning_content" in temp_chat and memory_enhance_flag:
+                    api_chat.append({"role": temp_chat["role"],
+                                     "content": "[思考过程]\n" + temp_chat["reasoning_content"] + "\n[思考结果]\n" + temp_chat[
+                                         "content"]
+                                     })
+                else:
+                    api_chat.append({"role": temp_chat["role"],
+                                     "content": temp_chat["content"]
+                                     })
+        if api_chat[-1]["role"] == "user":
+            api_chat[-1]["content"] = "如果我想知道这个问题的答案:" + api_chat[-1]["content"] + "\n我应该去网络上搜索什么内容，请不需要说明，不要有任何标点或者符号包括空格，直接给出输入搜索引擎的内容"
+        headers = {
+            "Authorization": "Bearer " + self.api_key,
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "messages": api_chat,
+            "model": "deepseek-chat",
+            "temperature": self.current_temperature,
+            "max_tokens": 20,
+        }
+        search_key_words = ""
+        try:
+            response = requests.post(
+                "https://api.deepseek.com/v1/chat/completions",
+                headers=headers,
+                json=payload
+            )
+            response_data = response.json()
+            if response.status_code == 200:
+                for choiceTemp in response_data["choices"]:
+                    search_key_words += choiceTemp["message"]["content"]
+            else:
+                self.show_error("API请求失败")
+                self.api_key = self.get_api_key()
+                self.config[0]["api-key"] = self.api_key
+                with open(self.config_file, "w", encoding="utf-8") as f:
+                    json.dump(self.config, f, ensure_ascii=False)
+        except Exception as e:
+            self.show_error(str(e))
+        return search_key_words
 
 if __name__ == "__main__":
     root = tk.Tk()
