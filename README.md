@@ -2,7 +2,7 @@
 
 **简介**
 
-DeepSeek MoonOrange 是一个用于使用DeepSeek的api访问deepseek的界面程序
+DeepSeek MoonOrange 是一个用于使用DeepSeek的api访问deepseek的界面程序，由MoonOrange及DeepSeek合作编写
 
 本项目完全开源于https://github.com/Orangewang124/DeepSeek-MoonOrange
 
@@ -122,4 +122,4 @@ DeepSeek官方建议如下，详情参考https://api-docs.deepseek.com/zh-cn/qui
 
 图标及图片来源于DeepDeek官网和微博摸鱼阿八
 
-*MoonOrange* 2025/03/03
+*MoonOrange* 2025/03/05
