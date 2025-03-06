@@ -116,6 +116,8 @@ DeepSeek官方建议如下，详情参考https://api-docs.deepseek.com/zh-cn/qui
 
 删除或更改历史对话记录文件可能会失去历史对话记录，建议先进行备份后再操作，请务必谨慎操作！！！
 
+全部源代码在DeepSeek.py中，带注释版本的全部代码在DeepSeekWithCommant.py中，注释由DeepSeek补充完成。
+
 **版权声明**
 
 该程序由MoonOrange及DeepSeek编写，只能用于非盈利目的。
