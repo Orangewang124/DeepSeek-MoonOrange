@@ -6,7 +6,8 @@ DeepSeek MoonOrange 是一个用于使用DeepSeek的api访问deepseek的界面�
 
 本项目完全开源于https://github.com/Orangewang124/DeepSeek-MoonOrange
 
-可以在https://github.com/Orangewang124/DeepSeek-MoonOrange/releases/直接下载.exe文件在windows系统下运行
+可以在https://github.com/Orangewang124/DeepSeek-MoonOrange/releases/
+直接下载.exe文件在windows系统下运行
 
 在DeepSeek官方功能基础上拓展了金鱼模式、记忆增强模式、联网搜索引擎定制化功能，联网搜索可以和文件上传同时使用
 
