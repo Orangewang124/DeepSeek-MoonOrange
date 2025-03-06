@@ -11,6 +11,8 @@ DeepSeek MoonOrange 是一个用于使用DeepSeek的api访问deepseek的界面�
 
 在DeepSeek官方功能基础上拓展了金鱼模式、记忆增强模式、联网搜索引擎定制化功能，联网搜索可以和文件上传同时使用
 
+python代码现在已经兼容windows和linux
+
 如果觉得有意思就帮我Star一下呗:)
 
 **功能特性**
