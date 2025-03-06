@@ -2,9 +2,16 @@
 
 **简介**
 
-DeepSeek MoonOrange 是一个用于使用DeepSeek的api访问deepseek的界面程序。
+DeepSeek MoonOrange 是一个用于使用DeepSeek的api访问deepseek的界面程序，由MoonOrange及DeepSeek合作编写
 
 本项目完全开源于https://github.com/Orangewang124/DeepSeek-MoonOrange
+
+可以在https://github.com/Orangewang124/DeepSeek-MoonOrange/releases/
+直接下载.exe文件在windows系统下运行
+
+在DeepSeek官方功能基础上拓展了金鱼模式、记忆增强模式、联网搜索引擎定制化功能，联网搜索可以和文件上传同时使用
+
+python代码现在已经兼容windows和linux
 
 如果觉得有意思就帮我Star一下呗:)
 
@@ -94,6 +101,8 @@ DeepSeek官方建议如下，详情参考https://api-docs.deepseek.com/zh-cn/qui
 
 点击新建对话后可以开启新的对话
 
+点击左下角联网引擎的复选框可以选择不同的联网引擎，可以结合自身需要使用
+
 更换主题可以更改chat_config.json文件中"theme_style"对应值，默认为"litera"，其他主题请参考https://ttkbootstrap.readthedocs.io/en/latest/
 
 请谨慎更改主题，避免程序无法运行，建议备份chat_config.json后再尝试
@@ -110,10 +119,12 @@ DeepSeek官方建议如下，详情参考https://api-docs.deepseek.com/zh-cn/qui
 
 删除或更改历史对话记录文件可能会失去历史对话记录，建议先进行备份后再操作，请务必谨慎操作！！！
 
+全部源代码在DeepSeek.py中，带注释版本的全部代码在DeepSeekWithCommant.py中，注释由DeepSeek补充完成。
+
 **版权声明**
 
 该程序由MoonOrange及DeepSeek编写，只能用于非盈利目的。
 
 图标及图片来源于DeepDeek官网和微博摸鱼阿八
 
-*MoonOrange* 2025/03/03
+*MoonOrange* 2025/03/06
