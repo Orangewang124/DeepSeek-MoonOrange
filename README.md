@@ -73,6 +73,12 @@ DeepSeek官方建议如下，详情参考https://api-docs.deepseek.com/zh-cn/qui
 
 创意类写作/诗歌创作	1.5
 
+*功能 8：自定义输出最大tokens*
+
+官方默认参数为4096，参数是1到8192之间的整数，请不要超过
+
+如果希望DeepSeek输出简短一些或者长一些可以使用这个功能
+
 **使用说明**
 
 第一次打开时会自动创建chat_config.json文件，文件目录为DeepSeek MoonOrange.exe的同一级目录，格式如下
@@ -123,8 +129,8 @@ DeepSeek官方建议如下，详情参考https://api-docs.deepseek.com/zh-cn/qui
 
 **版权声明**
 
-该程序由MoonOrange及DeepSeek编写，只能用于非盈利目的。
+该程序由MoonOrange及DeepSeek编写
 
 图标及图片来源于DeepDeek官网和微博摸鱼阿八
 
-*MoonOrange* 2025/03/06
+*MoonOrange* 2025/03/12
